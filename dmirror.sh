@@ -10,38 +10,18 @@ CYAN='\033[0;36m'
 WHITE='\033[0;37m'
 NC='\033[0m'
 
-# Countries to fetch mirrors from
-COUNTRIES=(US DE NL TR IR BH)
-mirrors=()
+# Canonical Debian mirrors for selected countries
+mirrors=(
+    "http://ftp.us.debian.org/debian/"
+    "http://ftp.de.debian.org/debian/"
+    "http://ftp.nl.debian.org/debian/"
+    "http://ftp.tr.debian.org/debian/"
+    "https://archive.debian.petiak.ir/debian/"
+    "https://mirror.aminidc.com/debian/"
+    "https://repo.mirror.famaserver.com/debian/"
+    "http://deb.debian.org/debian/"
+)
 
-echo -e "${BLUE}Fetching Debian mirrors...${NC}"
-
-# Fetch mirrors from Debian FTP list and filter countries
-for country in "${COUNTRIES[@]}"; do
-    # Use the official ftp-master list, filtered for http/https
-    url="https://www.debian.org/mirror/ftplist"
-    
-    while read -r line; do
-        [[ "$line" != http* ]] && continue
-        [[ "$line" != *"$country"* ]] && continue
-        [[ "$line" != */debian* ]] && continue
-
-        mirrors+=("${line%/}/debian")
-    done < <(curl -fs "$url")
-done
-
-# Remove duplicates
-mapfile -t mirrors < <(printf "%s\n" "${mirrors[@]}" | sort -u)
-
-if [[ ${#mirrors[@]} -eq 0 ]]; then
-    echo -e "${RED}No mirrors retrieved for Debian.${NC}"
-    exit 1
-fi
-
-echo -e "${GREEN}Retrieved ${#mirrors[@]} mirrors.${NC}"
-echo
-
-# Function to measure download speed
 measure_speed() {
     local url=$1
     local output
@@ -67,7 +47,6 @@ apply_mirror() {
         exit 1
     fi
 
-    # Replace existing deb URLs with new mirror
     sudo sed -i "s|http[s]\?://[^ ]*|$mirror|g" "$sources_file"
     sudo apt-get update
 }
@@ -104,7 +83,6 @@ if [[ ${#available_mirrors[@]} -eq 0 ]]; then
     exit 1
 fi
 
-# User selection
 echo
 echo -e "${BLUE}Select mirror mode:${NC}"
 echo "1) Auto select (fastest)"
